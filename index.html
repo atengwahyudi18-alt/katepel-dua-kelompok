@@ -11,7 +11,7 @@
   </style>
 </head>
 <body>
-  <header class="topbar"><div class="brand">KATEPEL · KUIS DUA KELOMPOK</div><nav class="nav"><button id="navProjector" class="active" type="button">Layar Proyektor</button><button id="navPhone" type="button">Layar HP</button></nav></header>
+  <header class="topbar"><div class="brand">KATEPEL · KUIS DUA KELOMPOK</div><nav class="nav"><button id="navProjector" class="active" type="button">Layar Proyektor</button><button id="navPhone" type="button">Layar HP</button><button id="navConfig" type="button">Sambungan</button></nav></header>
   <main>
     <div id="setupNotice" class="notice">Untuk menyambungkan dua HP sungguhan, masukkan URL proyek dan publishable key Supabase. Nilai ini disimpan di browser masing-masing perangkat.</div>
     <section id="projectorView"></section>
@@ -25,18 +25,18 @@
     ];
     const teams=[{id:"merah",name:"Sudut Merah",score:0,answer:null,result:"waiting"},{id:"kuning",name:"Sudut Kuning",score:0,answer:null,result:"waiting"}];
     const $=id=>document.getElementById(id);
-    let client=null,channel=null,roomCode="",questionIndex=0,checked=false,finished=false,phoneTeamId=null,phoneLocked=false,view="projector",roomReady=false,liveStatus="Belum tersambung";
+    let client=null,channel=null,roomCode="",questionIndex=0,checked=false,finished=false,phoneTeamId=null,phoneLocked=false,view="projector",roomReady=false,editingConfig=false,liveStatus="Belum tersambung";
     let phoneRoomCode="";
-    const savedUrl=localStorage.getItem("katepel_supabase_url")||"";
-    const savedKey=localStorage.getItem("katepel_supabase_key")||"";
+    let savedUrl=localStorage.getItem("katepel_supabase_url")||"";
+    let savedKey=localStorage.getItem("katepel_supabase_key")||"";
     function configureSupabase(url,key){
       if(!window.supabase||!url||!key)return false;
-      try{client=window.supabase.createClient(url.trim(),key.trim());localStorage.setItem("katepel_supabase_url",url.trim());localStorage.setItem("katepel_supabase_key",key.trim());return true;}catch(error){console.error(error);return false;}
+      try{savedUrl=url.trim();savedKey=key.trim();client=window.supabase.createClient(savedUrl,savedKey);localStorage.setItem("katepel_supabase_url",savedUrl);localStorage.setItem("katepel_supabase_key",savedKey);return true;}catch(error){console.error(error);return false;}
     }
     if(savedUrl&&savedKey)configureSupabase(savedUrl,savedKey);
     function setView(next){view=next;$("projectorView").hidden=next!=="projector";$('phoneView').hidden=next!=="phone";$('navProjector').classList.toggle("active",next==="projector");$('navPhone').classList.toggle("active",next==="phone");document.body.classList.remove("phone-playing");render();}
     function renderSetup(){
-      if(client)return "";
+      if(client&&!editingConfig)return "";
       return `<div class="panel"><h2>Hubungkan layanan realtime</h2><p class="muted">Masukkan URL proyek dan publishable key dari Supabase. Publishable key memang untuk dipakai di aplikasi browser; jangan gunakan secret key.</p><div class="config-grid"><input id="supabaseUrl" type="url" placeholder="https://xxxx.supabase.co" value="${savedUrl}"><input id="supabaseKey" type="password" placeholder="sb_publishable_…" value="${savedKey}"></div><div class="actions"><button class="btn" id="saveConfig">Simpan sambungan</button></div><div id="configStatus" class="status">${liveStatus}</div></div>`;
     }
     function makeRoomCode(){return String(Math.floor(10000000+Math.random()*90000000));}
@@ -44,13 +44,13 @@
       roomCode=code;channel=client.channel(`katepel-room-${code}`,{config:{broadcast:{self:false}}});
       channel.on("broadcast",{event:"answer"},({payload})=>{const team=teams.find(t=>t.id===payload.teamId);if(!team||checked||team.answer)return;team.answer=payload.answer;team.result="waiting";broadcastState();render();});
       channel.on("broadcast",{event:"join"},()=>broadcastState());
-      channel.subscribe(status=>{liveStatus=status;if(status==="SUBSCRIBED"){roomReady=true;broadcastState();render();}else render();});
+      channel.subscribe((status,error)=>{liveStatus=(status==="CHANNEL_ERROR"||status==="TIMED_OUT")?`Gagal tersambung (${status}). Periksa URL proyek dan publishable key.`:status;if(status==="SUBSCRIBED"){roomReady=true;broadcastState();render();}else{if(error)console.error("Supabase Realtime connection error:",error);render();}});
     }
     function broadcastState(){if(!channel||!roomReady)return;channel.send({type:"broadcast",event:"state",payload:{questionIndex,teams,checked,finished}});}
     function createRoom(){if(!client){render();return;}if(channel)client.removeChannel(channel);roomReady=false;teams.forEach(t=>{t.answer=null;t.result="waiting";t.score=0;});questionIndex=0;checked=false;finished=false;subscribeHost(makeRoomCode());}
     function joinRoom(code){if(!client){render();return;}if(channel)client.removeChannel(channel);phoneRoomCode=code.trim();phoneLocked=false;channel=client.channel(`katepel-room-${phoneRoomCode}`,{config:{broadcast:{self:false}}});
       channel.on("broadcast",{event:"state"},({payload})=>{questionIndex=payload.questionIndex;checked=payload.checked;finished=payload.finished;payload.teams.forEach(incoming=>{const local=teams.find(t=>t.id===incoming.id);if(local)Object.assign(local,incoming);});const own=teams.find(t=>t.id===phoneTeamId);phoneLocked=Boolean(own?.answer)||checked||finished;render();});
-      channel.subscribe(status=>{liveStatus=status;if(status==="SUBSCRIBED"){roomReady=true;channel.send({type:"broadcast",event:"join",payload:{teamId:phoneTeamId}});render();}else render();});
+      channel.subscribe((status,error)=>{liveStatus=(status==="CHANNEL_ERROR"||status==="TIMED_OUT")?`Gagal tersambung (${status}). Periksa URL proyek dan publishable key.`:status;if(status==="SUBSCRIBED"){roomReady=true;channel.send({type:"broadcast",event:"join",payload:{teamId:phoneTeamId}});render();}else{if(error)console.error("Supabase Realtime connection error:",error);render();}});
     }
     function sendAnswer(letter){if(!channel||!roomReady||!phoneTeamId||phoneLocked)return;phoneLocked=true;renderPhone();channel.send({type:"broadcast",event:"answer",payload:{teamId:phoneTeamId,answer:letter}});}
     function checkAnswers(){teams.forEach(team=>{if(!team.answer)return;team.result=team.answer===questions[questionIndex].answer?"correct":"wrong";if(team.result==="correct")team.score+=10;});checked=true;broadcastState();render();}
@@ -68,7 +68,7 @@
       document.body.classList.add("phone-playing");const team=teams.find(t=>t.id===phoneTeamId);$('phoneView').innerHTML=`<div class="phone-device ${phoneTeamId}"><div class="phone-logo"><div class="logo-mark">K</div><span>KATEPEL</span><small>Kuis Alternatif Terpadu Pembelajaran</small></div><div class="answer-pad">${["A","B","C","D"].map(letter=>`<button class="answer-key" data-answer="${letter}" ${phoneLocked||team.answer||checked||finished?"disabled":""}>${letter}</button>`).join("")}</div><p class="phone-instruction">Diskusikan dengan baik<br>agar jawaban tepat dan benar</p><div class="phone-icon" aria-hidden="true">💬<br>👥</div></div>`;$('phoneView').querySelectorAll("[data-answer]").forEach(button=>button.onclick=()=>sendAnswer(button.dataset.answer));
     }
     function render(){if(view==="projector")renderProjector();else renderPhone();}
-    $('navProjector').onclick=()=>setView("projector");$('navPhone').onclick=()=>{phoneRoomCode="";phoneTeamId=null;phoneLocked=false;setView("phone");};
+    $('navProjector').onclick=()=>setView("projector");$('navPhone').onclick=()=>{phoneRoomCode="";phoneTeamId=null;phoneLocked=false;setView("phone");};$('navConfig').onclick=()=>{editingConfig=!editingConfig;render();};
     document.addEventListener("keydown",event=>{if(event.key==="Escape"&&view==="phone"){phoneRoomCode="";phoneTeamId=null;phoneLocked=false;setView("projector");}});
     $('projectorView').hidden=false;$('phoneView').hidden=true;render();
   </script>
