@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KATEPEL — Kuis Alternatif Terpadu Pembelajaran</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: #173b2e;
+      background: linear-gradient(135deg, #ecfdf5, #f8fafc 60%, #fff7ed);
+    }
+    header {
+      padding: 20px 7%;
+      color: white;
+      background: #065f46;
+      font-weight: bold;
+    }
+    header span { display: block; margin-top: 5px; color: #bbf7d0; font-size: 13px; }
+    main { width: min(950px, 90%); margin: auto; padding: 70px 0 40px; }
+    .intro { margin-bottom: 35px; text-align: center; }
+    .intro small { color: #047857; font-weight: bold; letter-spacing: 2px; }
+    h1 { margin: 12px 0; font-size: clamp(36px, 7vw, 60px); }
+    .intro p { color: #60736c; line-height: 1.6; }
+    .rooms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    a.room {
+      display: block; padding: 28px; color: inherit; text-decoration: none;
+      background: white; border: 1px solid #dbe8e1; border-radius: 20px;
+      box-shadow: 0 12px 30px #123b2e12; transition: .2s;
+    }
+    a.room:hover { transform: translateY(-4px); border-color: #34a879; }
+    .icon { font-size: 34px; }
+    h2 { margin-bottom: 8px; }
+    .description { min-height: 50px; color: #60736c; line-height: 1.6; }
+    .button {
+      display: inline-block; margin-top: 16px; padding: 12px 17px;
+      color: white; background: #059669; border-radius: 10px; font-weight: bold;
+    }
+    .room:nth-child(2) .button { background: #ea580c; }
+    footer { padding: 25px; color: #60736c; text-align: center; font-size: 13px; }
+    @media (max-width: 650px) {
+      main { padding-top: 45px; }
+      .rooms { grid-template-columns: 1fr; }
+      .description { min-height: 0; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    KATEPEL
+    <span>Kuis Alternatif Terpadu Pembelajaran</span>
+  </header>
+
+  <main>
+    <section class="intro">
+      <small>SELAMAT DATANG DI GEDUNG KATEPEL</small>
+      <h1>Pilih Ruang Kuis</h1>
+      <p>Silakan pilih ruang permainan yang akan digunakan.</p>
+    </section>
+
+    <section class="rooms">
+      <a class="room" href="katepel-antar-kelompok.html">
+        <div class="icon">⚔️</div>
+        <h2>Antar Kelompok (1 vs 1)</h2>
+        <div class="description">Ruang kuis untuk pertandingan antara dua kelompok.</div>
+        <span class="button">Masuk ke Ruang 1 vs 1 →</span>
+      </a>
+
+      <a class="room" href="katepel-banyak-kelompok.html">
+        <div class="icon">👥</div>
+        <h2>Banyak Kelompok</h2>
+        <div class="description">Ruang kuis yang dapat diikuti hingga 10 kelompok.</div>
+        <span class="button">Masuk ke Ruang Banyak Kelompok →</span>
+      </a>
+    </section>
+  </main>
+
+  <footer>KATEPEL · Kuis Alternatif Terpadu Pembelajaran</footer>
+</body>
+</html>
