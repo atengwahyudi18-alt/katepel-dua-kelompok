@@ -8,7 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root{font-family:Arial,Helvetica,sans-serif;color:#17212b;background:#f1f5f6}*{box-sizing:border-box}body{margin:0}button,input,textarea,select{font:inherit}button{cursor:pointer}.bar{background:#075c47;color:white;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.brand{font-size:1.05rem;font-weight:900;letter-spacing:.03em}.nav{display:flex;gap:7px;flex-wrap:wrap}.nav button,.btn{border:0;border-radius:9px;padding:10px 13px;font-weight:800}.nav button{background:#08765a;color:white}.nav button.active{background:#f5a623;color:#17212b}.btn{background:#087f5b;color:white}.btn.secondary{background:#52616b}.btn.red{background:#b82a2a}.btn:disabled{opacity:.45;cursor:not-allowed}main{max-width:1120px;margin:18px auto;padding:0 14px 28px}.card{background:white;border-radius:15px;padding:20px;box-shadow:0 5px 20px #18302a12;margin-bottom:14px}.notice{background:#fff5d8;border:1px solid #edcb6c;color:#694d08;border-radius:10px;padding:12px 14px;margin-bottom:14px;line-height:1.4}.muted{color:#657480;line-height:1.5}.grid{display:grid;gap:12px}.cols2{grid-template-columns:repeat(2,minmax(0,1fr))}.cols3{grid-template-columns:repeat(3,minmax(0,1fr))}.manage-layout{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(280px,.9fr);gap:14px;align-items:stretch}.manage-card{margin:0}.import-title{font-size:1.35rem;font-weight:900;letter-spacing:.01em;margin:0 0 16px}.import-file{padding:11px;background:#f7f9fa;border:1px dashed #aab9c1;border-radius:10px}.bank-title{font-size:1.15rem;margin:20px 0 10px;padding-top:15px;border-top:1px solid #e2e8eb}.form-actions{margin-top:14px}h1{font-size:clamp(1.4rem,3vw,2rem);margin:0 0 8px}h2{margin:0 0 9px}.field{display:grid;gap:5px;margin:10px 0}.field label{font-weight:700;font-size:.9rem}.field input,.field textarea,.field select,.join input{width:100%;padding:10px;border:1px solid #ccd5da;border-radius:8px;background:#fff}.field textarea{min-height:78px;resize:vertical}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.right{justify-content:flex-end}.status{font-size:.9rem;color:#53616b;margin-top:9px}.question{font-size:clamp(1.2rem,2.7vw,1.8rem);line-height:1.38;margin:18px 0;padding:18px 20px;border-left:6px solid #075c47;border-radius:12px;background:#e4f2ed}.choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.choice{padding:12px;border:2px solid #ffffffa0;border-radius:12px;line-height:1.4;color:#101318;font-weight:700;box-shadow:0 3px 8px #00000012}.choice:nth-child(1){background:#ef68b2}.choice:nth-child(2){background:#41d77a}.choice:nth-child(3){background:#589df0}.choice:nth-child(4){background:#f9933e}.choice b{color:#101318;margin-right:7px}.teamgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:15px}.team{border:2px solid #d6e0e4;border-radius:12px;padding:13px}.team.merah{border-color:#df2929;background:#ffe2e2}.team.kuning{border-color:#d1b900;background:#fff87a}.teamname{font-weight:900}.teamstate{margin-top:6px;color:#333}.score{font-weight:900;color:#075c47;margin-top:5px}.pill{background:#e4f2ed;color:#075c47;border-radius:999px;padding:8px 12px;font-weight:900}.join{display:flex;gap:8px}.questionlist{display:grid;gap:8px;max-height:430px;overflow:auto}.qrow{border:1px solid #d7e0e4;border-radius:10px;padding:10px;display:flex;justify-content:space-between;gap:10px;align-items:start}.qrow p{margin:4px 0;font-size:.92rem}.answerpad{width:min(100%,440px);height:min(49vh,560px);min-height:270px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:9px;margin:3vh auto 0}.key{border:3px solid #ffffff90;border-radius:20px;color:#08090b;font-size:clamp(4.5rem,22vw,7rem);font-weight:1000;line-height:1;box-shadow:inset 0 3px 0 #ffffff55,inset 0 -5px 0 #00000012,0 6px 0 #00000025,0 12px 20px #00000020;touch-action:manipulation;-webkit-tap-highlight-color:transparent}.key:nth-child(1){background:#ef68b2}.key:nth-child(2){background:#41d77a}.key:nth-child(3){background:#589df0}.key:nth-child(4){background:#f9933e}.key:active{transform:translateY(4px)}.key:disabled{filter:saturate(.45);opacity:.7}.phone{position:fixed;inset:0;background:#f20c0c;color:#090909;padding:calc(10px + env(safe-area-inset-top)) 10px calc(8px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;justify-content:space-between}.phone.yellow{background:#fff400}.phone .mark{margin-top:1vh;width:72px;height:72px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#075c47 0 43%,#ffc928 45% 57%,#188363 59% 72%,#ffc928 74%);border:3px solid #ffc928;color:white;font-size:2.2rem;font-weight:1000}.phone .wordmark{font-weight:1000;font-size:1.3rem;color:white;letter-spacing:.04em;text-shadow:0 2px 3px #0005;margin-top:5px}.phone.yellow .wordmark{color:#075c47;text-shadow:none}.phone .tagline{font-size:.48rem;color:#fff;font-weight:bold}.phone.yellow .tagline{color:#075c47}.instruction{text-align:center;font-weight:900;text-transform:uppercase;line-height:1.45;margin:8px 0 0}.bubble{font-size:2rem;margin-bottom:1vh}.phone-wait{min-height:100dvh;display:grid;place-items:center;padding:20px;text-align:center;background:#f4f6f7}.warning{color:#9b322b;font-weight:700}.toast{position:fixed;z-index:1000;left:50%;bottom:24px;transform:translateX(-50%);max-width:min(92vw,540px);padding:12px 18px;border-radius:12px;background:#075c47;color:white;font-weight:800;box-shadow:0 8px 28px #0003}.toast.error{background:#a92b2b}.toast[hidden]{display:none}.app-credit{text-align:center;padding:18px 12px 24px;color:#657480;font-size:.88rem;font-weight:700;letter-spacing:.02em}.app-credit strong{color:#075c47}@media(max-width:760px){.manage-layout{grid-template-columns:1fr}}@media(max-width:650px){.bar{padding:10px}.card{padding:15px}main{margin:12px auto;padding:0 9px 20px}.cols2,.cols3{grid-template-columns:1fr}.choices{grid-template-columns:1fr}.join{flex-direction:column}.teamgrid{grid-template-columns:1fr 1fr}.answerpad{height:45vh;gap:7px}.key{border-radius:16px}}
-  body.projector-view #app {   zoom: var(--projector-zoom, 1); }  .zoom-controls {   display: flex;   align-items: center;   gap: 10px;   margin-top: 16px; }  .zoom-value {   min-width: 64px;   text-align: center;   font-size: 1.2rem;   font-weight: 900; }  </style>
+  body.projector-view #app .card {   padding-top: calc(20px * var(--projector-density, 1));   padding-bottom: calc(20px * var(--projector-density, 1)); }  body.projector-view #app .question {   margin-top: calc(18px * var(--projector-density, 1));   margin-bottom: calc(18px * var(--projector-density, 1));   padding-top: calc(18px * var(--projector-density, 1));   padding-bottom: calc(18px * var(--projector-density, 1)); }  body.projector-view #app .choices {   row-gap: calc(9px * var(--projector-density, 1)); }  body.projector-view #app .choice {   padding-top: calc(12px * var(--projector-density, 1));   padding-bottom: calc(12px * var(--projector-density, 1)); }  body.projector-view #app .teamgrid {   margin-top: calc(15px * var(--projector-density, 1));   row-gap: calc(10px * var(--projector-density, 1)); }  body.projector-view #app .team {   padding-top: calc(13px * var(--projector-density, 1));   padding-bottom: calc(13px * var(--projector-density, 1)); }  body.projector-view #app .teamstate {   margin-top: calc(6px * var(--projector-density, 1)); }  body.projector-view #app .score {   margin-top: calc(5px * var(--projector-density, 1)); }  body.projector-view #app .card > .row.right {   margin-top: calc(15px * var(--projector-density, 1)) !important; }  .zoom-controls {   display: flex;   align-items: center;   gap: 10px;   margin-top: 16px; }  .zoom-value {   min-width: 64px;   text-align: center;   font-size: 1.2rem;   font-weight: 900; }  </style>
 </head>
 <body>
   <header id="header" class="bar"><div class="brand">KATEPEL · KUIS ONLINE</div><nav class="nav"><button id="navQuestions" class="active">Kelola Soal</button><button id="navHost">Layar Proyektor</button><button id="navPhone">Layar HP</button><button id="navDisplay">Atur Tampilan</button><button id="navSettings">Sambungan</button></nav></header>
@@ -114,7 +114,7 @@ function renderHost(){
 );
 
 function applyProjectorZoom() {
-  document.documentElement.style.setProperty('--projector-zoom', String(projectorZoom));
+  document.documentElement.style.setProperty('--projector-density', String(projectorZoom));
   localStorage.setItem('katepel_projector_zoom', String(projectorZoom));
 
   const value = $('zoomValue');
@@ -133,12 +133,12 @@ function renderDisplaySettings() {
   $('app').innerHTML = `
     <div class="card">
       <h1>Atur Tampilan</h1>
-      <p class="muted">Sesuaikan ukuran isi layar proyektor agar pas di PID.</p>
+      <p class="muted">Rapatkan jarak vertikal agar pas di PID. Ukuran tulisan dan lebar tetap.</p>
       <div class="zoom-controls">
-        <button class="btn secondary" id="zoomOut">− Kecilkan</button>
+        <button class="btn secondary" id="zoomOut">− Rapatkan</button>
         <span class="zoom-value" id="zoomValue"></span>
-        <button class="btn" id="zoomIn">+ Besarkan</button>
-        <button class="btn secondary" id="zoomReset">Reset</button>
+        <button class="btn" id="zoomIn">+ Longgarkan</button>
+        <button class="btn secondary" id="zoomReset">Reset</button><button class="btn secondary" id="toggleFullscreen">Layar penuh</button>
       </div>
       <p class="muted">Klik Layar Proyektor untuk melihat hasilnya.</p>
     </div>`;
@@ -150,6 +150,17 @@ function renderDisplaySettings() {
     projectorZoom = 1;
     applyProjectorZoom();
   };
+  $('toggleFullscreen').onclick = async () => {
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      await document.documentElement.requestFullscreen();
+    }
+  } catch {
+    toast('Mode layar penuh gagal dibuka. Coba tombol F11.', 'error');
+  }
+};
 }
     function renderPhone(){
       $('header').hidden=false;
@@ -190,7 +201,14 @@ function renderDisplaySettings() {
   else renderSettings();
 }
     $('navQuestions').onclick=()=>setView('questions');$('navHost').onclick=()=>setView('host');$('navPhone').onclick=()=>{phoneRoom='';phoneTeam='';phoneReady=false;phoneHasState=false;setView('phone')};$('navDisplay').onclick=()=>setView('display');$('navSettings').onclick=()=>setView('settings');
-    renderQuestions();
+    document.addEventListener('fullscreenchange', () => {
+  const button = $('toggleFullscreen');
+  if (button) {
+    button.textContent = document.fullscreenElement
+      ? 'Kembali normal'
+      : 'Layar penuh';
+  }
+});  renderQuestions();
   })();
   </script>
 </body>
