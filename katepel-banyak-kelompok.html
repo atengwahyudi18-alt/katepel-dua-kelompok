@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KATEPEL - Kuis Alternatif Terpadu Pembelajaran</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-gray-200 font-sans h-screen overflow-hidden">
+    <div id="root" class="h-full"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const AplikasiUtuh = () => {
+            const [halamanAktif, setHalamanAktif] = useState('dasbor');
+            const [jumlahKelompokAktif, setJumlahKelompokAktif] = useState(10);
+            const [isFullScreen, setIsFullScreen] = useState(false);
+
+            useEffect(() => {
+                const onFullScreenChange = () => {
+                    setIsFullScreen(!!document.fullscreenElement);
+                };
+                document.addEventListener('fullscreenchange', onFullScreenChange);
+                return () => document.removeEventListener('fullscreenchange', onFullScreenChange);
+            }, []);
+
+            const toggleFullScreen = () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                    });
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
+            };
+
+            const [modalInfo, setModalInfo] = useState({ isOpen: false, pesan: "", judul: "", tipe: "info", onConfirm: null });
+
+            const tampilkanPesan = (judul, pesan, tipe = "info", onConfirm = null) => {
+                setModalInfo({ isOpen: true, judul, pesan, tipe, onConfirm });
+            };
+
+            // Diubah otomatis menjadi Kelompok 1 sampai Kelompok 10
+            const [daftarKelompok, setDaftarKelompok] = useState([
+                { id: 1, nama: "Kelompok 1", skor: 0, pilihan: null, status: "idle" },
+                { id: 2, nama: "Kelompok 2", skor: 0, pilihan: null, status: "idle" },
+                { id: 3, nama: "Kelompok 3", skor: 0, pilihan: null, status: "idle" },
+                { id: 4, nama: "Kelompok 4", skor: 0, pilihan: null, status: "idle" },
+                { id: 5, nama: "Kelompok 5", skor: 0, pilihan: null, status: "idle" },
+                { id: 6, nama: "Kelompok 6", skor: 0, pilihan: null, status: "idle" },
+                { id: 7, nama: "Kelompok 7", skor: 0, pilihan: null, status: "idle" },
+                { id: 8, nama: "Kelompok 8", skor: 0, pilihan: null, status: "idle" },
+                { id: 9, nama: "Kelompok 9", skor: 0, pilihan: null, status: "idle" },
+                { id: 10, nama: "Kelompok 10", skor: 0, pilihan: null, status: "idle" },
+            ]);
+
+            const [daftarSoal, setDaftarSoal] = useState([
+                {
+                    id: 1,
+                    pertanyaan: "Pada suatu pagi yang cerah di pinggir hutan yang lebat, sang Kancil yang dikenal cerdik sedang berjalan-jalan mencari buah-buahan segar untuk sarapan. Tiba-tiba langkahnya terhenti di dekat sebuah sungai berarus sangat deras karena jembatan kayu satu-satunya telah ambruk. Di seberang sungai, ia melihat pohon rambutan berbuah sangat lebat yang air liurnya hampir menetes. Berdasarkan cuplikan cerita di atas, apakah masalah utama yang sedang dihadapi oleh tokoh Kancil?",
+                    gambar: null,
+                    opsi: { A: "Kancil tidak memiliki teman untuk berjalan-jalan di hutan", B: "Kancil kesulitan menyeberang sungai yang deras untuk mencapai pohon buah", C: "Buah rambutan di seberang sungai ternyata rasanya sangat masam", D: "Kancil tersesat di tengah hutan lebat saat mencari sarapan pagi" },
+                    kunci: "B"
+                }
+            ]);
+
+            const [formData, setFormData] = useState({
+                pertanyaan: "",
+                gambarPreview: null,
+                opsiA: "",
+                opsiB: "",
+                opsiC: "",
+                opsiD: "",
+                kunci: "A"
+            });
+            const [editId, setEditId] = useState(null);
+
+            const [soalPreview, setSoalPreview] = useState([]);
+            const [namaFileUnggahan, setNamaFileUnggahan] = useState("");
+
+            const [indeksSoal, setIndeksSoal] = useState(0);
+            const soalAktif = daftarSoal[indeksSoal] || daftarSoal[0];
+
+            const [telahDiperiksa, setTelahDiperiksa] = useState(false);
+            const [kuisSelesai, setKuisSelesai] = useState(false);
+
+            const handleUbahNamaKelompok = (id, namaBaru) => {
+                setDaftarKelompok(daftarKelompok.map(k => k.id === id ? { ...k, nama: namaBaru } : k));
+            };
+
+            const handleFormChange = (e) => {
+                const { name, value } = e.target;
+                setFormData({ ...formData, [name]: value });
+            };
+
+            const handleImageChange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    setFormData({ ...formData, gambarPreview: URL.createObjectURL(file) });
+                }
+            };
+
+            const handleSimpanSoal = () => {
+                if (!formData.pertanyaan) {
+                    tampilkanPesan("Perhatian", "Teks pertanyaan tidak boleh kosong!", "info");
+                    return;
+                }
+
+                if (editId !== null) {
+                    setDaftarSoal(daftarSoal.map(s => s.id === editId ? {
+                        ...s,
+                        pertanyaan: formData.pertanyaan,
+                        gambar: formData.gambarPreview,
+                        opsi: { A: formData.opsiA, B: formData.opsiB, C: formData.opsiC, D: formData.opsiD },
+                        kunci: formData.kunci
+                    } : s));
+                    tampilkanPesan("Berhasil", "Soal berhasil diperbarui!", "info");
+                    setEditId(null);
+                } else {
+                    const soalBaru = {
+                        id: Date.now(),
+                        pertanyaan: formData.pertanyaan,
+                        gambar: formData.gambarPreview,
+                        opsi: { A: formData.opsiA, B: formData.opsiB, C: formData.opsiC, D: formData.opsiD },
+                        kunci: formData.kunci
+                    };
+                    setDaftarSoal([...daftarSoal, soalBaru]);
+                    tampilkanPesan("Berhasil", "Soal baru berhasil ditambahkan!", "info");
+                }
+
+                setFormData({ pertanyaan: "", gambarPreview: null, opsiA: "", opsiB: "", opsiC: "", opsiD: "", kunci: "A" });
+            };
+
+            const handleMulaiEdit = (soal) => {
+                setEditId(soal.id);
+                setFormData({
+                    pertanyaan: soal.pertanyaan,
+                    gambarPreview: soal.gambar,
+                    opsiA: soal.opsi.A || "",
+                    opsiB: soal.opsi.B || "",
+                    opsiC: soal.opsi.C || "",
+                    opsiD: soal.opsi.D || "",
+                    kunci: soal.kunci || "A"
+                });
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            const handleHapusSoal = (id) => {
+                tampilkanPesan(
+                    "Konfirmasi Hapus", 
+                    "Yakin ingin menghapus soal ini dari bank soal?", 
+                    "confirm", 
+                    () => {
+                        setDaftarSoal(daftarSoal.filter(s => s.id !== id));
+                        if (editId === id) {
+                            setEditId(null);
+                            setFormData({ pertanyaan: "", gambarPreview: null, opsiA: "", opsiB: "", opsiC: "", opsiD: "", kunci: "A" });
+                        }
+                        setModalInfo({ isOpen: false, pesan: "", judul: "", tipe: "info", onConfirm: null });
+                    }
+                );
+            };
+
+            const handleUnduhTemplate = () => {
+                const element = document.createElement("a");
+                const fileContent = `=== FORMAT TEMPLATE SOAL KATEPEL ===
+PERTANYAAN: Tulis pertanyaan di sini?
+OPSI_A: Jawaban pilihan A
+OPSI_B: Jawaban pilihan B
+OPSI_C: Jawaban pilihan C
+OPSI_D: Jawaban pilihan D
+KUNCI: A
+`;
+                const file = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
+                element.href = URL.createObjectURL(file);
+                element.download = `Template_Soal_KATEPEL.txt`;
+                document.body.appendChild(element);
+                element.click();
+                document.body.removeChild(element);
+            };
+
+            const handleUnggahTemplateFile = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    setNamaFileUnggahan(file.name);
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const isiTeks = event.target.result;
+                        const blokSoal = isiTeks.split(/PERTANYAAN:/i).slice(1);
+                        const hasilDeteksi = [];
+
+                        blokSoal.forEach((blok, index) => {
+                            const baris = blok.split('\n').map(b => b.trim()).filter(b => b.length > 0);
+                            let pertanyaan = baris[0] || "";
+                            let opsiA = "", opsiB = "", opsiC = "", opsiD = "", kunci = "A";
+
+                            baris.forEach(b => {
+                                if (b.toUpperCase().startsWith("OPSI_A:")) opsiA = b.substring(7).trim();
+                                if (b.toUpperCase().startsWith("OPSI_B:")) opsiB = b.substring(7).trim();
+                                if (b.toUpperCase().startsWith("OPSI_C:")) opsiC = b.substring(7).trim();
+                                if (b.toUpperCase().startsWith("OPSI_D:")) opsiD = b.substring(7).trim();
+                                if (b.toUpperCase().startsWith("KUNCI:")) kunci = b.substring(6).trim().toUpperCase();
+                            });
+
+                            if (pertanyaan) {
+                                hasilDeteksi.push({
+                                    id: Date.now() + index,
+                                    pertanyaan: pertanyaan,
+                                    gambar: null,
+                                    opsi: { A: opsiA || "Pilihan A", B: opsiB || "Pilihan B", C: opsiC || "Pilihan C", D: opsiD || "Pilihan D" },
+                                    kunci: ['A','B','C','D'].includes(kunci) ? kunci : "A"
+                                });
+                            }
+                        });
+
+                        if (hasilDeteksi.length > 0) {
+                            setSoalPreview(hasilDeteksi);
+                        } else {
+                            tampilkanPesan("Format Tidak Sesuai", "Pastikan menggunakan format PERTANYAAN, OPSI_A-D, dan KUNCI.", "info");
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+
+            const handleSimpanDariPreview = () => {
+                if (soalPreview.length === 0) return;
+                setDaftarSoal([...daftarSoal, ...soalPreview]);
+                tampilkanPesan("Berhasil Impor", `Berhasil mendeteksi dan menyimpan ${soalPreview.length} soal baru dari file ke bank soal KATEPEL!`, "info");
+                setSoalPreview([]);
+                setNamaFileUnggahan("");
+            };
+
+            const kelompokAktif = daftarKelompok.slice(0, jumlahKelompokAktif);
+
+            const handlePilihJawaban = (id, jawaban) => {
+                if (telahDiperiksa || kuisSelesai) return;
+                setDaftarKelompok(daftarKelompok.map(k => k.id === id ? { ...k, pilihan: jawaban, status: "menjawab" } : k));
+            };
+
+            const handlePeriksaJawaban = () => {
+                if (telahDiperiksa || kuisSelesai) return;
+                setDaftarKelompok(daftarKelompok.map(k => {
+                    if (k.status === "menjawab") {
+                        const isBenar = k.pilihan === soalAktif.kunci;
+                        return { ...k, status: isBenar ? "benar" : "salah", skor: isBenar ? k.skor + 10 : k.skor };
+                    }
+                    return k;
+                }));
+                setTelahDiperiksa(true);
+            };
+
+            const handleSelanjutnya = () => {
+                if (indeksSoal < daftarSoal.length - 1) {
+                    setIndeksSoal(indeksSoal + 1);
+                    setDaftarKelompok(daftarKelompok.map(k => ({ ...k, pilihan: null, status: "idle" })));
+                    setTelahDiperiksa(false);
+                } else {
+                    setKuisSelesai(true);
+                    tampilkanPesan("Kuis Selesai", "Seluruh soal telah dijawab. Silakan cek klasemen akhir perolehan poin!", "info");
+                }
+            };
+
+            const handleUlangiKuis = () => {
+                tampilkanPesan(
+                    "Mulai Ulang Kuis", 
+                    "Yakin ingin mengulang kuis dari awal? Skor seluruh regu akan direset kembali menjadi 0 (Bank Soal tetap aman).", 
+                    "confirm", 
+                    () => {
+                        setIndeksSoal(0);
+                        setKuisSelesai(false);
+                        setTelahDiperiksa(false);
+                        setDaftarKelompok(daftarKelompok.map(k => ({ ...k, skor: 0, pilihan: null, status: "idle" })));
+                        setModalInfo({ isOpen: false, pesan: "", judul: "", tipe: "info", onConfirm: null });
+                    }
+                );
+            };
+
+            return (
+                <div className="h-screen flex flex-col relative overflow-hidden bg-gray-200">
+                    
+                    {modalInfo.isOpen && (
+                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+                            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border-t-4 border-emerald-600">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-xl">ℹ️</div>
+                                    <h3 className="text-xl font-bold text-gray-800">{modalInfo.judul}</h3>
+                                </div>
+                                <p className="text-gray-600 text-sm leading-relaxed mb-6">{modalInfo.pesan}</p>
+                                <div className="flex justify-end gap-3">
+                                    {modalInfo.tipe === 'confirm' && (
+                                        <button 
+                                            onClick={() => setModalInfo({ isOpen: false, pesan: "", judul: "", tipe: "info", onConfirm: null })}
+                                            className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold px-5 py-2 rounded-xl text-sm"
+                                        >
+                                            Batal
+                                        </button>
+                                    )}
+                                    <button 
+                                        onClick={() => {
+                                            if (modalInfo.onConfirm) {
+                                                modalInfo.onConfirm();
+                                            } else {
+                                                setModalInfo({ isOpen: false, pesan: "", judul: "", tipe: "info", onConfirm: null });
+                                            }
+                                        }}
+                                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2 rounded-xl text-sm"
+                                    >
+                                        {modalInfo.tipe === 'confirm' ? "Ya, Lanjutkan" : "Mengerti / Tutup"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <nav className="bg-emerald-800 text-white px-4 py-2 flex justify-between items-center shadow-md shrink-0">
+                        <div className="flex items-center gap-3">
+                            <span className="text-xl font-black bg-white text-emerald-800 px-2.5 py-0.5 rounded-lg shadow">KATEPEL</span>
+                            <div>
+                                <span className="font-bold text-sm block leading-tight">Kuis Alternatif Terpadu Pembelajaran - SDN Tipar</span>
+                                <span className="text-[11px] text-emerald-200">Katepel • Dikembangkan oleh Ateng Wahyudi, S.Pd.</span>
+                            </div>
+                        </div>
+                        <div className="flex gap-2 items-center">
+                            <button onClick={() => setHalamanAktif('dasbor')} className={`px-3 py-1.5 rounded-lg font-bold text-xs shadow ${halamanAktif === 'dasbor' ? 'bg-orange-500 text-white' : 'bg-emerald-700 hover:bg-emerald-600 text-white'}`}>
+                                ⚙ Kelola Soal
+                            </button>
+                            <button onClick={() => setHalamanAktif('kelompok')} className={`px-3 py-1.5 rounded-lg font-bold text-xs shadow ${halamanAktif === 'kelompok' ? 'bg-orange-500 text-white' : 'bg-emerald-700 hover:bg-emerald-600 text-white'}`}>
+                                👥 Pengaturan Kelompok
+                            </button>
+                            <button onClick={() => setHalamanAktif('kuis')} className={`px-3 py-1.5 rounded-lg font-bold text-xs shadow ${halamanAktif === 'kuis' ? 'bg-orange-500 text-white' : 'bg-emerald-700 hover:bg-emerald-600 text-white'}`}>
+                                🎮 Layar Kuis PID ({jumlahKelompokAktif} Regu)
+                            </button>
+                            <button onClick={toggleFullScreen} className="px-3 py-1.5 rounded-lg font-bold text-xs shadow bg-gray-700 hover:bg-gray-600 text-white ml-2 border border-gray-500 flex items-center gap-1">
+                                {isFullScreen ? "🗗 Layar Normal" : "🖵 Layar Penuh"}
+                            </button>
+                        </div>
+                    </nav>
+
+                    <div className="flex-1 overflow-auto p-3">
+                        
+                        {halamanAktif === 'dasbor' && (
+                            <div className="max-w-6xl mx-auto pb-6">
+                                <div className="bg-white p-4 rounded-xl shadow-md mb-4 flex justify-between items-center border-t-4 border-emerald-600">
+                                    <div>
+                                        <h1 className="text-xl font-bold text-gray-800">Manajemen Bank Soal KATEPEL</h1>
+                                        <p className="text-gray-500 text-xs">Kelola bank soal, edit, sisipkan gambar, atau impor massal via template.</p>
+                                    </div>
+                                    <button onClick={handleUnduhTemplate} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-xl shadow text-xs flex items-center gap-1.5">
+                                        📥 Unduh Template (.txt)
+                                    </button>
+                                </div>
+
+                                <div className="bg-emerald-50 p-4 rounded-xl shadow-md border border-emerald-300 mb-4">
+                                    <h2 className="text-sm font-bold text-emerald-900 mb-1">📂 Unggah Berkas Template Soal (.txt)</h2>
+                                    <input type="file" accept=".txt" onChange={handleUnggahTemplateFile} className="w-full text-xs text-gray-700 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:font-semibold file:bg-emerald-700 file:text-white cursor-pointer bg-white p-1.5 rounded-lg border"/>
+
+                                    {soalPreview.length > 0 && (
+                                        <div className="mt-3 bg-white border border-amber-400 p-3 rounded-xl shadow-sm">
+                                            <h3 className="font-bold text-amber-800 mb-1 text-xs">🔍 Pratinjau Terdeteksi: <span className="text-emerald-700">{soalPreview.length} Soal</span></h3>
+                                            <div className="max-h-32 overflow-y-auto flex flex-col gap-1.5 mb-2">
+                                                {soalPreview.map((s, idx) => (
+                                                    <div key={s.id} className="bg-gray-50 p-2 rounded border text-[11px] flex justify-between items-center">
+                                                        <span><b>#{idx + 1}</b> {s.pertanyaan}</span>
+                                                        <span className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">Kunci: {s.kunci}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <button onClick={handleSimpanDariPreview} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg text-xs shadow">
+                                                ✨ Simpan Massal ({soalPreview.length} Soal) ke Bank Soal
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                                    <div className="lg:col-span-2 bg-white p-5 rounded-xl shadow-md border border-gray-300">
+                                        <h2 className="text-base font-bold text-gray-800 mb-3 pb-2 border-b flex justify-between items-center">
+                                            <span>{editId !== null ? "✏️ Edit Soal Aktif" : "Formulir Tambah Soal Manual"}</span>
+                                            {editId !== null && (
+                                                <button onClick={() => { setEditId(null); setFormData({pertanyaan: "", gambarPreview: null, opsiA: "", opsiB: "", opsiC: "", opsiD: "", kunci: "A"}); }} className="text-[11px] bg-gray-200 text-gray-700 px-2 py-0.5 rounded">Batal</button>
+                                            )}
+                                        </h2>
+                                        
+                                        <div className="mb-3">
+                                            <label className="block text-gray-700 font-bold mb-1 text-xs">Teks Pertanyaan</label>
+                                            <textarea name="pertanyaan" value={formData.pertanyaan} onChange={handleFormChange} rows="2" className="w-full p-2.5 border rounded-xl outline-none text-xs focus:ring-2 focus:ring-emerald-400" placeholder="Tuliskan pertanyaan..."></textarea>
+                                        </div>
+
+                                        <div className="mb-3 bg-gray-50 p-2.5 rounded-xl border border-dashed border-gray-400">
+                                            <label className="block text-gray-700 font-bold mb-1 text-xs">Sisipkan / Ganti Gambar (Opsional)</label>
+                                            <input type="file" accept="image/*" onChange={handleImageChange} className="w-full text-[11px] text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:font-semibold file:bg-emerald-50 file:text-emerald-700 cursor-pointer"/>
+                                            {formData.gambarPreview && (
+                                                <div className="mt-2 relative h-24 bg-white border rounded-lg flex justify-center items-center">
+                                                    <img src={formData.gambarPreview} alt="Preview" className="h-full object-contain" />
+                                                    <button onClick={() => setFormData({...formData, gambarPreview: null})} className="absolute top-1 right-1 bg-red-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">Hapus</button>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-2 mb-3">
+                                            <div><label className="text-pink-600 font-bold text-[11px]">Pilihan A</label><input type="text" name="opsiA" value={formData.opsiA} onChange={handleFormChange} className="w-full p-1.5 border rounded-lg text-xs" placeholder="Opsi A"/></div>
+                                            <div><label className="text-blue-600 font-bold text-[11px]">Pilihan B</label><input type="text" name="opsiB" value={formData.opsiB} onChange={handleFormChange} className="w-full p-1.5 border rounded-lg text-xs" placeholder="Opsi B"/></div>
+                                            <div><label className="text-green-600 font-bold text-[11px]">Pilihan C</label><input type="text" name="opsiC" value={formData.opsiC} onChange={handleFormChange} className="w-full p-1.5 border rounded-lg text-xs" placeholder="Opsi C"/></div>
+                                            <div><label className="text-orange-600 font-bold text-[11px]">Pilihan D</label><input type="text" name="opsiD" value={formData.opsiD} onChange={handleFormChange} className="w-full p-1.5 border rounded-lg text-xs" placeholder="Opsi D"/></div>
+                                        </div>
+
+                                        <div className="mb-4">
+                                            <label className="block text-gray-700 font-bold mb-1 text-xs">Kunci Jawaban</label>
+                                            <select name="kunci" value={formData.kunci} onChange={handleFormChange} className="w-full p-2 border rounded-xl bg-white font-bold text-emerald-600 text-xs">
+                                                <option value="A">Pilihan A</option><option value="B">Pilihan B</option><option value="C">Pilihan C</option><option value="D">Pilihan D</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="flex justify-end">
+                                            <button onClick={handleSimpanSoal} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2 rounded-xl text-xs shadow">
+                                                {editId !== null ? "Perbarui Soal" : "Simpan & Terbitkan Soal"}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white p-5 rounded-xl shadow-md border border-gray-300 flex flex-col h-[520px]">
+                                        <h2 className="text-base font-bold text-gray-800 mb-3 pb-2 border-b">Bank Soal Aktif ({daftarSoal.length})</h2>
+                                        <div className="flex-1 overflow-y-auto flex flex-col gap-2">
+                                            {daftarSoal.map((soal, index) => (
+                                                <div key={soal.id} className="bg-gray-50 border p-2.5 rounded-xl shadow-sm flex flex-col gap-1">
+                                                    <div className="flex justify-between items-start">
+                                                        <span className="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Soal #{index + 1}</span>
+                                                        <div className="flex gap-1">
+                                                            <button onClick={() => handleMulaiEdit(soal)} className="bg-amber-500 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">Edit</button>
+                                                            <button onClick={() => handleHapusSoal(soal.id)} className="bg-red-500 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">✕</button>
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-xs font-semibold text-gray-800 line-clamp-2">{soal.pertanyaan}</p>
+                                                    <span className="text-[10px] text-green-600 font-bold">Kunci: {soal.kunci}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {halamanAktif === 'kelompok' && (
+                            <div className="max-w-4xl mx-auto pb-6">
+                                <div className="bg-white p-6 rounded-xl shadow-md border border-gray-300">
+                                    <h1 className="text-xl font-bold text-gray-800 mb-1">Pengaturan Regu / Kelompok Kompetisi</h1>
+                                    <p className="text-gray-500 text-xs mb-4">Tentukan jumlah regu yang aktif bertanding hari ini dan sesuaikan nama kelompoknya.</p>
+                                    
+                                    <div className="mb-4 flex items-center gap-3 bg-emerald-50 p-3 rounded-xl border border-emerald-200">
+                                        <label className="font-bold text-emerald-900 text-xs">Jumlah Kelompok Bertanding:</label>
+                                        <select 
+                                            value={jumlahKelompokAktif} 
+                                            onChange={(e) => setJumlahKelompokAktif(Number(e.target.value))}
+                                            className="p-2 border rounded-xl font-bold bg-white text-emerald-800 text-xs shadow-sm"
+                                        >
+                                            {[2,3,4,5,6,7,8,9,10].map(num => (
+                                                <option key={num} value={num}>{num} Kelompok</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3 mb-4">
+                                        {daftarKelompok.map((k, index) => (
+                                            <div key={k.id} className={`flex items-center gap-2 p-2.5 rounded-xl border shadow-sm ${index < jumlahKelompokAktif ? 'bg-white border-emerald-300' : 'bg-gray-100 opacity-40'}`}>
+                                                <span className="font-bold text-[10px] bg-emerald-200 text-emerald-800 px-2 py-1 rounded">Regu {k.id}</span>
+                                                <input 
+                                                    type="text" 
+                                                    value={k.nama} 
+                                                    disabled={index >= jumlahKelompokAktif}
+                                                    onChange={(e) => handleUbahNamaKelompok(k.id, e.target.value)}
+                                                    className="w-full p-1.5 border rounded-lg bg-gray-50 font-semibold text-xs text-gray-800"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="flex justify-end">
+                                        <button onClick={() => tampilkanPesan("Berhasil", "Pengaturan kelompok berhasil disimpan! Silakan buka Layar Kuis PID.", "info")} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl text-xs shadow">
+                                            Simpan Pengaturan Kelompok
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {halamanAktif === 'kuis' && (
+                            <div className="h-full flex flex-col gap-2">
+                                <div className="bg-white p-4 rounded-xl shadow shrink-0 border-2 border-gray-300 relative">
+                                    <div className="absolute top-2 right-4 bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-bold text-xs">
+                                        Soal {indeksSoal + 1} / {daftarSoal.length}
+                                    </div>
+                                    <h2 className="text-lg font-bold mb-3 text-gray-800 pr-24 leading-snug">{soalAktif.pertanyaan}</h2>
+                                    
+                                    {soalAktif.gambar && (
+                                        <div className="mb-3 h-24 flex justify-center bg-gray-50 rounded-lg border p-1">
+                                            <img src={soalAktif.gambar} alt="Ilustrasi" className="h-full object-contain" />
+                                        </div>
+                                    )}
+
+                                    <div className="grid grid-cols-2 gap-2 mb-2">
+                                        <div className="bg-pink-400 text-white font-bold px-3 py-2 rounded-lg shadow text-sm border border-pink-500 truncate">A. {soalAktif.opsi.A}</div>
+                                        <div className="bg-green-400 text-white font-bold px-3 py-2 rounded-lg shadow text-sm border border-green-500 truncate">C. {soalAktif.opsi.C}</div>
+                                        <div className="bg-blue-400 text-white font-bold px-3 py-2 rounded-lg shadow text-sm border border-blue-500 truncate">B. {soalAktif.opsi.B}</div>
+                                        <div className="bg-orange-400 text-white font-bold px-3 py-2 rounded-lg shadow text-sm border border-orange-500 truncate">D. {soalAktif.opsi.D}</div>
+                                    </div>
+                                    
+                                    <div className="flex justify-end gap-2 mt-2">
+                                        {!kuisSelesai && (
+                                            <button onClick={handlePeriksaJawaban} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 px-5 rounded-lg shadow active:scale-95 text-xs border border-emerald-800 disabled:opacity-50">
+                                                Periksa Jawaban
+                                            </button>
+                                        )}
+                                        
+                                        {kuisSelesai ? (
+                                            <button onClick={handleUlangiKuis} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-1.5 px-6 rounded-lg shadow active:scale-95 text-xs border border-purple-800">
+                                                🔄 Mulai Ulang Kuis (Reset Skor)
+                                            </button>
+                                        ) : (
+                                            <button onClick={handleSelanjutnya} className="bg-sky-500 hover:bg-sky-600 text-white font-bold py-1.5 px-5 rounded-lg shadow active:scale-95 text-xs border border-sky-600 disabled:opacity-50" disabled={!telahDiperiksa}>
+                                                {indeksSoal === daftarSoal.length - 1 ? "Selesai" : "Pertanyaan Selanjutnya"}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-row gap-3 flex-grow min-h-0">
+                                    <div className={`w-3/4 grid gap-2 h-full ${
+                                        jumlahKelompokAktif <= 4 ? 'grid-cols-2 grid-rows-2' :
+                                        jumlahKelompokAktif <= 6 ? 'grid-cols-3 grid-rows-2' :
+                                        jumlahKelompokAktif <= 8 ? 'grid-cols-4 grid-rows-2' : 'grid-cols-5 grid-rows-2'
+                                    }`}>
+                                        {kelompokAktif.map((k) => (
+                                            <div key={k.id} className={`p-2 rounded-xl shadow border-2 h-full flex flex-col justify-between items-center transition-all ${k.status === 'idle' ? 'bg-gray-100 border-gray-300' : ''} ${k.status === 'menjawab' ? 'bg-yellow-300 border-yellow-500' : ''} ${k.status === 'benar' ? 'bg-green-400 border-green-600 text-white' : ''} ${k.status === 'salah' ? 'bg-red-400 border-red-600 text-white' : ''}`}>
+                                                <h3 className="font-bold text-xs bg-yellow-200 text-gray-800 px-3 py-1 rounded-full border border-yellow-400 w-full text-center truncate shadow-sm">{k.nama}</h3>
+                                                
+                                                {k.status === 'idle' && !kuisSelesai && (
+                                                    <div className="grid grid-cols-2 gap-1 w-full flex-grow my-1">
+                                                        <button onClick={() => handlePilihJawaban(k.id, 'A')} className="bg-pink-400 hover:bg-pink-500 text-white font-bold rounded shadow border border-pink-500 text-xs">A</button>
+                                                        <button onClick={() => handlePilihJawaban(k.id, 'C')} className="bg-green-400 hover:bg-green-500 text-white font-bold rounded shadow border border-green-500 text-xs">C</button>
+                                                        <button onClick={() => handlePilihJawaban(k.id, 'B')} className="bg-blue-400 hover:bg-blue-500 text-white font-bold rounded shadow border border-blue-500 text-xs">B</button>
+                                                        <button onClick={() => handlePilihJawaban(k.id, 'D')} className="bg-orange-400 hover:bg-orange-500 text-white font-bold rounded shadow border border-orange-500 text-xs">D</button>
+                                                    </div>
+                                                )}
+
+                                                {k.status === 'menjawab' && <div className="flex-grow flex items-center justify-center"><span className="font-bold text-xs text-yellow-900 text-center leading-tight">Sudah<br/>Menjawab</span></div>}
+                                                {k.status === 'benar' && <div className="flex-grow flex items-center justify-center"><span className="font-bold text-xl tracking-wider">BETUL</span></div>}
+                                                {k.status === 'salah' && <div className="flex-grow flex items-center justify-center"><span className="font-bold text-xl tracking-wider">SALAH</span></div>}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="w-1/4 bg-white rounded-xl shadow-md border-2 border-gray-300 flex flex-col h-full overflow-hidden">
+                                        <div className="bg-orange-400 text-white font-bold text-center py-2.5 m-2 rounded-lg text-sm border border-orange-600 shrink-0">
+                                            Perolehan Akhir
+                                        </div>
+                                        <div className="flex-1 overflow-y-auto px-3 pb-2 flex flex-col gap-1.5">
+                                            {[...kelompokAktif].sort((a, b) => b.skor - a.skor).map((k, index) => (
+                                                <div key={k.id} className="bg-gray-100 flex justify-between px-3 py-1.5 rounded shadow-sm font-bold text-xs text-gray-700 border border-gray-200">
+                                                    <span className="truncate mr-2">{index + 1}. {k.nama}</span>
+                                                    <span className="text-emerald-600 shrink-0">{k.skor}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<AplikasiUtuh />);
+    </script>
+</body>
+</html>
