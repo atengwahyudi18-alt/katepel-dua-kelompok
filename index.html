@@ -63,13 +63,50 @@
       $('downloadTemplate').onclick=()=>{const txt='PERTANYAAN: Tulis pertanyaan di sini?\nOPSI_A: Jawaban A\nOPSI_B: Jawaban B\nOPSI_C: Jawaban C\nOPSI_D: Jawaban D\nKUNCI: A\n';const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain;charset=utf-8'}));a.download='Template_Soal_KATEPEL.txt';a.click();URL.revokeObjectURL(a.href)};
       $('importFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;const txt=await file.text();const chunks=txt.split(/PERTANYAAN:/i).slice(1);const add=chunks.map((chunk,i)=>{const lines=chunk.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);const get=(prefix,fallback='')=>lines.find(s=>s.toUpperCase().startsWith(prefix+':'))?.slice(prefix.length+1).trim()||fallback;return {id:Date.now()+i,pertanyaan:(lines[0]||'').trim(),gambar:'',opsi:{A:get('OPSI_A'),B:get('OPSI_B'),C:get('OPSI_C'),D:get('OPSI_D')},kunci:get('KUNCI','A').toUpperCase()}}).filter(q=>q.pertanyaan&&LETTERS.every(l=>q.opsi[l]));if(!add.length){toast('Format tidak cocok. Pastikan ada pertanyaan, opsi A–D, dan kunci.','error');return}questions=[...questions,...add];saveQuestions();render();toast(`${add.length} soal berhasil ditambahkan.`)};
     }
-    function renderHost(){
-      const setup=client?'':configPanel();
-      if(!roomCode){$('app').innerHTML=`${setup}<div class="card"><h1>Layar Proyektor</h1><p class="muted">Mulai kuis memakai soal dari Bank Soal KATEPEL (${questions.length} soal). Peserta bergabung dari HP.</p><p class="muted">Kelompok yang bermain: <b>Sudut Merah</b> dan <b>Sudut Kuning</b>.</p><div class="row right"><button class="btn" id="createRoom" ${client&&questions.length?'':'disabled'}>Buat ruang kuis</button></div><div class="status">${escapeHtml(status)}</div></div>`;bindConfig();$('createRoom').onclick=createRoom;return}
-      if(finished){const winner=teams[0].score===teams[1].score?'Hasil seri':`${teams[0].score>teams[1].score?teams[0].name:teams[1].name} menang`;$('app').innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><h1>Kuis selesai</h1><div class="pill">KODE ${roomCode}</div></div><h2 style="text-align:center;margin:25px">${escapeHtml(winner)}</h2><div class="teamgrid">${teams.map(t=>`<div class="team ${t.id}"><div class="teamname">${escapeHtml(t.name)}</div><div class="score">${t.score} poin</div></div>`).join('')}</div><div class="row right" style="margin-top:16px"><button class="btn secondary" id="resetQuiz">Ulangi kuis</button><button class="btn red" id="endRoom">Tutup ruang</button></div></div>`;$('resetQuiz').onclick=resetQuiz;$('endRoom').onclick=()=>{if(channel&&client)client.removeChannel(channel);channel=null;roomCode='';channelReady=false;status='Ruang ditutup';render()};return}
-      const q=getQuestion();$('app').innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><div><h1>Layar Proyektor</h1><span class="muted">Kode ini dibagikan ke HP peserta.</span></div><div class="pill">KODE ${roomCode}<br><small>${escapeHtml(status)}</small></div></div><h2 style="margin-top:18px">Soal ${questionIndex+1} / ${questions.length}</h2><p class="question">${escapeHtml(q.pertanyaan)}</p>${q.gambar?`<div style="text-align:center;margin:10px"><img src="${q.gambar}" alt="Ilustrasi soal" style="max-height:180px;max-width:100%;object-fit:contain"></div>`:''}<div class="choices">${LETTERS.map(l=>`<div class="choice"><b>${l}.</b>${escapeHtml(q.opsi[l])}</div>`).join('')}</div><div class="teamgrid">${teams.map(t=>`<div class="team ${t.id}"><div class="teamname">${escapeHtml(t.name)}</div><div class="teamstate">${t.result==='correct'?'Benar':t.result==='wrong'?'Belum tepat':t.answer?'Sudah menjawab':'Menunggu jawaban'}</div><div class="score">${t.score} poin</div></div>`).join('')}</div><div class="row right" style="margin-top:15px"><button class="btn" id="check" ${checked||!teams.some(t=>t.answer)?'disabled':''}>Periksa jawaban</button><button class="btn secondary" id="next" ${!checked?'disabled':''}>${questionIndex===questions.length-1?'Lihat hasil':'Soal selanjutnya'}</button><button class="btn secondary" id="endRoom">Tutup ruang</button></div></div>`;
-      $('check').onclick=checkAnswers;$('next').onclick=nextQuestion;$('endRoom').onclick=()=>{if(channel&&client)client.removeChannel(channel);channel=null;roomCode='';channelReady=false;status='Ruang ditutup';render()};
-    }
+function renderHost(){
+  const setup=client?'':configPanel();
+
+  if(!roomCode){
+    $('app').innerHTML=`${setup}<div class="card"><h1>Layar Proyektor</h1><p class="muted">Mulai kuis memakai soal dari Bank Soal KATEPEL (${questions.length} soal). Peserta bergabung dari HP.</p><p class="muted">Kelompok yang bermain: <b>Sudut Merah</b> dan <b>Sudut Kuning</b>.</p><div class="row right"><button class="btn" id="createRoom" ${client&&questions.length?'':'disabled'}>Buat ruang kuis</button></div><div class="status">${escapeHtml(status)}</div></div>`;
+    bindConfig();
+    $('createRoom').onclick=createRoom;
+    return;
+  }
+
+  if(finished){
+    const winner=teams[0].score===teams[1].score
+      ?'Hasil seri'
+      :`${teams[0].score>teams[1].score?teams[0].name:teams[1].name} menang`;
+
+    $('app').innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><h1>Kuis selesai</h1><div class="pill">KODE ${roomCode}</div></div><h2 style="text-align:center;margin:25px">${escapeHtml(winner)}</h2><div class="teamgrid">${teams.map(t=>`<div class="team ${t.id}"><div class="teamname">${escapeHtml(t.name)}</div><div class="score">${t.score} poin</div></div>`).join('')}</div><div class="row right" style="margin-top:16px"><button class="btn secondary" id="resetQuiz">Ulangi kuis</button><button class="btn red" id="endRoom">Tutup ruang</button></div></div>`;
+
+    $('resetQuiz').onclick=resetQuiz;
+    $('endRoom').onclick=()=>{
+      if(channel&&client)client.removeChannel(channel);
+      channel=null;
+      roomCode='';
+      channelReady=false;
+      status='Ruang ditutup';
+      render();
+    };
+    return;
+  }
+
+  const q=getQuestion();
+
+  $('app').innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><div><h1>Layar Proyektor</h1><span class="muted">Kode ini dibagikan ke HP peserta.</span></div><div class="pill">KODE ${roomCode}<br><small>${escapeHtml(status)}</small></div></div><h2 style="margin-top:18px">Soal ${questionIndex+1} / ${questions.length}</h2><p class="question">${escapeHtml(q.pertanyaan)}</p>${q.gambar?`<div style="text-align:center;margin:10px"><img src="${q.gambar}" alt="Ilustrasi soal" style="max-height:180px;max-width:100%;object-fit:contain"></div>`:''}<div class="choices">${LETTERS.map(l=>`<div class="choice"><b>${l}.</b>${escapeHtml(q.opsi[l])}</div>`).join('')}</div><div class="teamgrid">${teams.map(t=>`<div class="team ${t.id}"><div class="teamname">${escapeHtml(t.name)}</div><div class="teamstate" style="${t.answer?'text-align:center;font-size:clamp(1.25rem,2.4vw,1.9rem);font-weight:900;min-height:2.7em;display:grid;place-items:center;':''}">${t.result==='correct'?'Benar':t.result==='wrong'?'Salah':t.answer?'Sudah Menjawab':'Menunggu Jawaban'}</div><div class="score">${t.score} poin</div></div>`).join('')}</div><div class="row right" style="margin-top:15px"><button class="btn" id="check" ${checked||!teams.some(t=>t.answer)?'disabled':''}>Periksa jawaban</button><button class="btn secondary" id="next" ${!checked?'disabled':''}>${questionIndex===questions.length-1?'Lihat hasil':'Soal selanjutnya'}</button><button class="btn secondary" id="endRoom">Tutup ruang</button></div></div>`;
+
+  $('check').onclick=checkAnswers;
+  $('next').onclick=nextQuestion;
+  $('endRoom').onclick=()=>{
+    if(channel&&client)client.removeChannel(channel);
+    channel=null;
+    roomCode='';
+    channelReady=false;
+    status='Ruang ditutup';
+    render();
+  };
+}
     function renderSettings(){ $('app').hidden=false;$('phoneRoot').hidden=true;$('app').innerHTML=`${configPanel()}<div class="card"><p class="muted">Gunakan URL proyek yang berakhiran <b>.supabase.co</b> dan kunci <b>Publishable</b>.</p><button class="btn secondary" id="settingsBack">Kembali</button></div>`;bindConfig();$('settingsBack').onclick=()=>setView('host') }
     function renderPhone(){
       $('header').hidden=false;
