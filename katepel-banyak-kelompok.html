@@ -10,7 +10,7 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body class="bg-gray-200 font-sans h-screen overflow-hidden">
-    <a href="./" style="position:fixed;left:16px;bottom:16px;z-index:99999;padding:11px 16px;border-radius:12px;background:#065f46;color:white;font:bold 14px Arial,sans-serif;text-decoration:none;box-shadow:0 4px 12px #0003">🏠 Beranda KATEPEL</a><div id="root" class="h-full"></div>
+<div id="root" class="h-full"></div>
 
     <script type="text/babel">
         const { useState, useEffect } = React;
@@ -339,7 +339,9 @@ KUNCI: A
                             </button>
                             <button onClick={toggleFullScreen} className="px-3 py-1.5 rounded-lg font-bold text-xs shadow bg-gray-700 hover:bg-gray-600 text-white ml-2 border border-gray-500 flex items-center gap-1">
                                 {isFullScreen ? "🗗 Layar Normal" : "🖵 Layar Penuh"}
-                            </button>
+                            </button><a href="./" className="px-3 py-1.5 rounded-lg font-bold text-xs shadow bg-teal-600 hover:bg-teal-700 text-white">
+  🏠 Beranda
+</a>
                         </div>
                     </nav>
 
