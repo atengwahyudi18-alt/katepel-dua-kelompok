@@ -1,0 +1,21 @@
+{
+  "name": "KATEPEL — Kuis Alternatif Terpadu Pembelajaran",
+  "short_name": "KATEPEL",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ecfdf5",
+  "theme_color": "#065f46",
+  "icons": [
+    {
+      "src": "./katepel-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./katepel-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
